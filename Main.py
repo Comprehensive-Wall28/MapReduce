@@ -1,34 +1,28 @@
 from pyspark import SparkContext
-from mrjob.job import MRJob
+
 sc = SparkContext.getOrCreate()
 
+# Read Data
 text_file = sc.textFile("coursegrades.txt")
 
+#Map the values to key Course and value Grade
+course_grades = text_file.map(lambda line: line.split(',')) \
+    .map(lambda parts: (parts[1].strip(), int(parts[2].strip())))
 
-class averageGrade(MRJob):
+#Reduce the data, get the average of all grades
+course_totals = course_grades.groupByKey() \
+    .mapValues(list) \
+    .map(lambda x: (x[0], sum(x[1]) / len(x[1]) if x[1] else 0))
 
-    def mapper(self, _, line):
+#Find the Highest Average
+highest_average = course_totals.max(key=lambda x: x[1])
 
-        year, course_name, student_grade, university_name = line.split(',')
+# Output the results (to Colab's output)
+for course, average in course_totals.collect():
+    print(f"Course: {course}, Average Grade: {average:.2f}")
 
-        yield course_name, int(student_grade)
+print(f"Course with the highest average grade: {highest_average[0]} "
+    f"with an average of: {highest_average[1]:.2f}")
 
-    def reducer(self, course_name, grades):
-
-        grades_list = list(grades)
-        average_grade = sum(grades_list) / len(grades_list)
-        yield course_name, average_grade
-
-    def finalReducer(self, course_name, average_grade):
-        max_average = -1
-        max_course = ""
-
-        for average, course_name in average_grade.items():
-            if average > max_average:
-                max_average = average
-                max_course = course_name
-
-        yield max_course, max_average
-
-averageGrade.run()
-
+# Stop SparkContext
+sc.stop()
