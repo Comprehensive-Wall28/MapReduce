@@ -22,6 +22,8 @@ course_totals = course_grades.groupByKey() \
 # Find the Highest Average
 highest_average = course_totals.max(key=lambda x: x[1])
 
+course_totals.saveAsTextFile("course_average")
+
 # print
 for course, average in course_totals.collect():
     print(f"Course: {course}, Average Grade: {average}")
@@ -44,6 +46,8 @@ university_average = university_grades.groupByKey() \
 
 #Find highest average
 highest_uni_average = university_average.max(key=lambda x: x[1])
+
+university_average.saveAsTextFile("university_average")
 
 #Print
 for university, average in university_average.collect():
@@ -68,6 +72,8 @@ def top_3_grades(grades):
 year_top_grades = year_grades.groupByKey() \
     .mapValues(list) \
     .mapValues(top_3_grades)
+
+year_top_grades.saveAsTextFile("year_top_grades")
 
 # Print the top 3 grades for each year
 for year, grades in year_top_grades.collect():
